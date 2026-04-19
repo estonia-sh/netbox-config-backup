@@ -1,3 +1,8 @@
+# PyCharm / IDE 配置
+.idea/
+*.iml
+*.iws
+*.ipr
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
@@ -205,3 +210,8 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# 日志、临时文件
+*.log
+tmp/
+temp/
