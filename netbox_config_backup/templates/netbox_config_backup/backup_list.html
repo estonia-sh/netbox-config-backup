@@ -1,0 +1,27 @@
+{% extends 'generic/object_list.html' %}
+
+{% block title %}备份设备列表{% endblock %}
+
+{% block extra_controls %}
+<a href="{% url 'plugins:netbox_config_backup:trigger_backup_all' %}" class="btn btn-primary">
+    <i class="mdi mdi-cloud-upload"></i> 立即备份
+</a>
+{{ block.super }}
+{% endblock extra_controls %}
+
+
+{% block bulk_buttons %}
+{% if return_url %}
+<input type="hidden" name="return_url" value="{{ return_url }}">
+{% endif %}
+<button type="submit" name="bulk_backup"
+        formaction="{% url 'plugins:netbox_config_backup:trigger_backup_edit'%}"
+        class="btn btn-warning me-1">
+    <i class="mdi mdi-database-refresh"></i> 批量备份
+</button>
+<button type="submit" name="bulk_download"
+        formaction="{% url 'plugins:netbox_config_backup:bulkconfigbackup_download'%}"
+        class="btn btn-outline-primary me-1">
+    <i class="mdi mdi-download"></i> 批量导出配置
+</button>
+{% endblock bulk_buttons %}

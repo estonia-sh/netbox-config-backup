@@ -1,0 +1,156 @@
+{% extends 'generic/object.html' %}
+{% load helpers %}
+{% load render_table from django_tables2 %}
+
+{% block content %}
+  <div class="row">
+    {# 左侧：设备基本信息 + 本次备份任务详情 #}
+    <div class="col col-md-6">
+      {# 卡片1：设备基础信息 #}
+      <div class="card">
+        <h2 class="card-header">设备基本信息</h2>
+        <table class="table table-hover attr-table">
+          <tr>
+            <th scope="row">设备名称</th>
+            <td>{{ object.device|linkify }}</td>
+          </tr>
+          <tr>
+            <th scope="row">设备厂商</th>
+            <td>{{ object.device.device_type.manufacturer }}</td>
+          </tr>
+          <tr>
+            <th scope="row">管理IP</th>
+            <td>{{ object.device.primary_ip|placeholder }}</td>
+          </tr>
+          <tr>
+            <th scope="row">SSH用户名</th>
+            <td>{{ object.ssh_username|placeholder }}</td>
+          </tr>
+          <tr>
+              <th scope="row">SSH密码</th>
+              <td>
+                  <div class="d-flex align-items-center gap-2">
+                      {% if object.ssh_password %}
+                          <!-- 密码隐藏容器 -->
+                          <span id="password_text" data-password="{{ object.ssh_password }}">●●●●●●</span>
+                          <!-- 切换显示/隐藏按钮 -->
+                          <button
+                              type="button"
+                              class="btn btn-sm btn-outline-secondary border-0 p-0 ms-2"
+                              onclick="togglePassword()"
+                              title="显示/隐藏密码"
+                          >
+                              <i id="password_icon" class="mdi mdi-eye"></i>
+                          </button>
+                      {% else %}
+                          <!-- 空值时显示占位符 -->
+                          {{ object.ssh_password|placeholder }}
+                      {% endif %}
+                  </div>
+              </td>
+          </tr>
+          <tr>
+            <th scope="row">SSH端口</th>
+            <td>22</td>
+          </tr>
+        </table>
+      </div>
+
+      {# 卡片2：本次备份任务状态 #}
+      <div class="card mt-3">
+        <h2 class="card-header">备份任务详情</h2>
+        <table class="table table-hover attr-table">
+          <tr>
+            <th scope="row">备份状态</th>
+            <td>{% badge object.get_status_display bg_color=object.get_status_color %}</td>
+          </tr>
+          <tr>
+            <th scope="row">备份时间</th>
+            <td>{{ object.backup_time }}</td>
+          </tr>
+          <tr>
+            <th scope="row">备份耗时</th>
+            <td>{{ object.duration|placeholder }}</td>
+          </tr>
+        </table>
+      </div>
+
+      {# NetBox内置面板：自定义字段、标签、评论 #}
+      {% include 'inc/panels/custom_fields.html' %}
+      {% include 'inc/panels/tags.html' %}
+      {% include 'inc/panels/comments.html' %}
+    </div>
+
+    {# 右侧：错误信息 + 配置内容 #}
+    <div class="col col-md-6">
+      {# 卡片3：错误信息（失败时展示） #}
+      {% if object.status == 'failed' and object.error_msg %}
+      <div class="card mb-3">
+        <h2 class="card-header text-danger">错误信息</h2>
+        <div class="card-body">
+          <pre class="text-danger">{{ object.error_msg }}</pre>
+        </div>
+      </div>
+      {% endif %}
+
+      {# 卡片4：备份配置内容 #}
+      <div class="card">
+        <h2 class="card-header d-flex justify-content-between align-items-center">
+          配置内容
+          {% if object.status == 'success' %}
+          <div class="btn-group">
+            {# 原有下载按钮 #}
+            <a href="{% url 'plugins:netbox_config_backup:deviceconfigbackup_download' pk=object.pk %}" class="btn btn-sm btn-primary">
+              <i class="mdi mdi-download"></i> 下载配置
+            </a>
+            {# 新增：配置恢复按钮（红色警示 + 确认弹窗） #}
+            <a href="{% url 'plugins:netbox_config_backup:deviceconfigbackup_recovery' pk=object.pk %}"
+               class="btn btn-sm btn-danger ml-2"
+               onclick="return confirm('⚠️ 危险操作！确定要将此配置恢复到设备吗？\n该操作会覆盖设备当前配置！')">
+              <i class="mdi mdi-restore"></i> 配置恢复
+            </a>
+          </div>
+          {% endif %}
+        </h2>
+        <div class="card-body">
+          {% if object.config_data_txt %}
+            <pre class="bg-light p-3 rounded" style="max-height: 400px; overflow-y: auto;">{{ object.config_data_txt }}</pre>
+          {% else %}
+            <div class="text-muted">暂无配置内容</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# 整行：该设备所有历史备份记录表格 #}
+  <div class="row mt-4">
+    <div class="col col-md-12">
+      <div class="card">
+        <h5 class="card-header">该设备历史备份记录</h5>
+        <div class="table-responsive">
+          {% render_table backup_records_table %}
+        </div>
+      </div>
+    </div>
+  </div>
+{# 极简切换脚本（放在页面底部即可 #}
+<script>
+function togglePassword() {
+    const textEl = document.getElementById('password_text');
+    const iconEl = document.getElementById('password_icon');
+    const realPassword = textEl.getAttribute('data-password');
+
+    // 切换显示状态
+    if (textEl.innerText === '●●●●●●') {
+        textEl.innerText = realPassword;
+        iconEl.classList.remove('mdi-eye');
+        iconEl.classList.add('mdi-eye-off');
+    } else {
+        textEl.innerText = '●●●●●●';
+        iconEl.classList.remove('mdi-eye-off');
+        iconEl.classList.add('mdi-eye');
+    }
+}
+</script>
+{% endblock content %}

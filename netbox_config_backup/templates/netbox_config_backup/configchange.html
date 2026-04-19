@@ -1,0 +1,71 @@
+{% extends 'generic/object.html' %}
+
+{% block content %}
+  <!-- 基本信息卡片 -->
+  <div class="row mb-3">
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-header">
+          <strong>配置变更基本信息</strong>
+        </div>
+        <div class="card-body">
+          <table class="table table-hover attr-table">
+            <tbody>
+              <tr>
+                <th scope="row">关联设备</th>
+                <td>{{ object.device|linkify }}</td>
+              </tr>
+              <tr>
+                <th scope="row">变更时间</th>
+                <td>{{ object.change_time }}</td>
+              </tr>
+              <tr>
+                <th scope="row">变更摘要</th>
+                <td>
+                  {% if object.change_summary %}
+                    {{ object.change_summary }}
+                  {% else %}
+                    <span class="text-muted">无变更摘要</span>
+                  {% endif %}
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">旧备份配置</th>
+                <td>
+                  {% if object.old_backup %}
+                    <a href="{{ object.old_backup.get_absolute_url }}">
+                      {{ object.old_backup }}（备份时间：{{ object.old_backup.backup_time }}）
+                    </a>
+                  {% else %}
+                    <span class="text-muted">首次备份（无旧配置）</span>
+                  {% endif %}
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">新备份配置</th>
+                <td>
+                  <a href="{{ object.new_backup.get_absolute_url }}">
+                    {{ object.new_backup }}（备份时间：{{ object.new_backup.backup_time }}）
+                  </a>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+{# 整行：配置差异对比（核心） #}
+<div class="card mt-3">
+    <div class="card-header">
+        <strong>配置变更差异</strong>
+    </div>
+    <div class="card-body" style="max-height: 700px; overflow-y: auto;">
+        {% if object.diff_content %}
+            {{ object.diff_content|safe }}
+        {% else %}
+            <div class="alert alert-info">暂无配置变更</div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

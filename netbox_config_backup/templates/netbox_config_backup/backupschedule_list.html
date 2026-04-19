@@ -1,0 +1,13 @@
+{% extends 'generic/object_list.html' %}
+{% block title %}定时备份配置{% endblock %}
+
+{% block bulk_buttons %}
+{% if return_url %}
+<input type="hidden" name="return_url" value="{{ return_url }}">
+{% endif %}
+<button type="submit" name="action"
+        formaction="{% url 'plugins:netbox_config_backup:backupschedule_action'%}"
+        class="btn btn-warning me-1">
+    <i class="mdi mdi-database-refresh"></i> 启用/暂停
+</button>
+{% endblock bulk_buttons %}

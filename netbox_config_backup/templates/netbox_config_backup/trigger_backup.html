@@ -1,0 +1,8 @@
+{% extends 'generic/object_edit.html' %}
+{% load helpers %}
+
+{% block title %}备份 {{ device.name }} 配置{% endblock %}
+
+{% block form %}
+{% render_form form %}
+{% endblock %}
