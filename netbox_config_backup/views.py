@@ -147,8 +147,8 @@ class BackupScheduleActionView(View):
             # 切换启用状态
             instance.enabled = not instance.enabled
             instance.save()
-
-            jobs = ConfigBackupJob.get_jobs(instance)
+            jobs = Job.objects.filter(object_id = pk)
+            #jobs = ConfigBackupJob.get_jobs(instance)
 
             # ==============================================
             # 2. 【关键】逐个停止 Redis 里的真实任务

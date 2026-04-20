@@ -57,6 +57,7 @@ def backup_device_config(device: Device, username: str, password: str, device_ba
             config_data_xml = get_config_via_netconf(netconf_device)
             backup_record.config_data_xml = config_data_xml
             device_backup.config_data_xml = config_data_xml
+            device_backup.error_msg = ''
         except Exception as e:
             backup_record.error_msg = str(e)
             device_backup.error_msg = str(e)
