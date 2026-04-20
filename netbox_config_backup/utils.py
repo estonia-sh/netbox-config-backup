@@ -39,6 +39,8 @@ def backup_device_config(device: Device, username: str, password: str, device_ba
         "port": 22,
         "hostkey_verify": False,
     }
+    # 格式化时间
+    now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     try:
         with ConnectHandler(**netmiko_device) as conn:
             # 进入特权模式(思科设备)
@@ -63,8 +65,7 @@ def backup_device_config(device: Device, username: str, password: str, device_ba
             device_backup.error_msg = str(e)
             if request:
                 messages.error(request, f'设备{device.name}执行NETCONF备份失败:{e}')
-        # 格式化时间
-        now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
         # 5. 保存配置到数据库
         backup_record.filename = f'{device.name}-{now}.cfg'
         backup_record.status = 'success'
@@ -80,7 +81,7 @@ def backup_device_config(device: Device, username: str, password: str, device_ba
             messages.success(request, f"设备 {device.name} 执行SSH配置备份成功！")
 
     except Exception as e:
-        now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        #now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         backup_record.status = 'failed'
         device_backup.status = 'failed'
         backup_record.error_msg = str(e)
@@ -94,35 +95,36 @@ def backup_device_config(device: Device, username: str, password: str, device_ba
         device_backup.save()
         backup_record.save()
 
-    new_backup = backup_record
-    # ======================
-    # 新增：自动生成变更记录
-    # ======================
-    try:
-        # 获取该设备上一次最新备份
-        old_backup = ConfigBackupRecord.objects.filter(
-            device=device
-        ).exclude(id=new_backup.id).order_by("-id").first()
+    if backup_record.status == 'success':
+        new_backup = backup_record
+        # ======================
+        # 新增：自动生成变更记录
+        # ======================
+        try:
+            # 获取该设备上一次最新备份
+            old_backup = ConfigBackupRecord.objects.filter(
+                device=device
+            ).exclude(id=new_backup.id).exclude(status='failed').order_by("-created").first()
 
-        if old_backup:
-            # 对比新旧配置
-            diff_html,status = generate_config_diff(
-                old_backup.config_data_txt,
-                new_backup.config_data_txt
-            )
-            # 生成变更记录
-            ConfigChange.objects.create(
-                device=device,
-                old_backup=old_backup,
-                new_backup=new_backup,
-                diff_content=diff_html,
-                status=status,
-                change_time=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                change_summary=f"变更自 {old_backup.backup_time} → {new_backup.backup_time}"
-            )
-    except Exception as e:
-        if request:
-            messages.error(request,f'设备{device.name}生成变更失败:{e}')
+            if old_backup:
+                # 对比新旧配置
+                diff_html, status = generate_config_diff(
+                    old_backup.config_data_txt,
+                    new_backup.config_data_txt
+                )
+                # 生成变更记录
+                ConfigChange.objects.create(
+                    device=device,
+                    old_backup=old_backup,
+                    new_backup=new_backup,
+                    diff_content=diff_html,
+                    status=status,
+                    change_time=now,
+                    change_summary=f"变更自 {old_backup.backup_time} → {new_backup.backup_time}"
+                )
+        except Exception as e:
+            if request:
+                messages.error(request, f'设备{device.name}生成变更失败:{e}')
 
     return True
 
@@ -149,7 +151,6 @@ def generate_config_diff(old_config, new_config):
     if old_lines == new_lines:
         status = 'no_change'
         return '<div class="alert alert-success">✅ 本次备份与上一次配置完全一致，无任何变更</div>', status
-
     # 创建 difflib 对比器（生成HTML高亮）
     diff = difflib.HtmlDiff(
         wrapcolumn=120,  # 换行宽度
