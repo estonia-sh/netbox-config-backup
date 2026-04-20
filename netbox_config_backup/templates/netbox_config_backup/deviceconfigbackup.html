@@ -15,8 +15,8 @@
             <td>{{ object.device|linkify }}</td>
           </tr>
           <tr>
-            <th scope="row">设备厂商</th>
-            <td>{{ object.device.device_type.manufacturer }}</td>
+            <th scope="row">系统平台</th>
+            <td>{{ object.device.platform.name }}</td>
           </tr>
           <tr>
             <th scope="row">管理IP</th>
@@ -83,28 +83,32 @@
 
     {# 右侧：错误信息 + 配置内容 #}
     <div class="col col-md-6">
-      {# 卡片3：错误信息（失败时展示） #}
-      {% if object.status == 'failed' and object.error_msg %}
+      {# 卡片3：错误信息（始终展示，有错误标红，无错误提示） #}
       <div class="card mb-3">
-        <h2 class="card-header text-danger">错误信息</h2>
+        <h2 class="card-header {% if object.status == 'failed' or object.error_msg %}text-danger{% else %}text-muted{% endif %}">
+          错误信息
+        </h2>
         <div class="card-body">
-          <pre class="text-danger">{{ object.error_msg }}</pre>
+          {% if object.status == 'failed' or object.error_msg %}
+            <pre class="text-danger">{{ object.error_msg }}</pre>
+          {% else %}
+            <pre class="text-muted">无错误信息</pre>
+          {% endif %}
         </div>
       </div>
-      {% endif %}
 
-      {# 卡片4：备份配置内容 #}
+      {# 卡片4：备份配置内容（始终展示） #}
       <div class="card">
         <h2 class="card-header d-flex justify-content-between align-items-center">
           配置内容
           {% if object.status == 'success' %}
           <div class="btn-group">
             {# 原有下载按钮 #}
-            <a href="{% url 'plugins:netbox_config_backup:deviceconfigbackup_download' pk=object.pk %}" class="btn btn-sm btn-primary">
+            <a href="{% url 'plugins:netbox_config_backup:configbackuprecord_download' pk=object.pk %}" class="btn btn-sm btn-primary">
               <i class="mdi mdi-download"></i> 下载配置
             </a>
             {# 新增：配置恢复按钮（红色警示 + 确认弹窗） #}
-            <a href="{% url 'plugins:netbox_config_backup:deviceconfigbackup_recovery' pk=object.pk %}"
+            <a href="{% url 'plugins:netbox_config_backup:configbackuprecord_recovery' pk=object.pk %}"
                class="btn btn-sm btn-danger ml-2"
                onclick="return confirm('⚠️ 危险操作！确定要将此配置恢复到设备吗？\n该操作会覆盖设备当前配置！')">
               <i class="mdi mdi-restore"></i> 配置恢复

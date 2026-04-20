@@ -53,9 +53,15 @@ def backup_device_config(device: Device, username: str, password: str, device_ba
                 config = conn.send_command("display current-configuration")
             else:
                 config = conn.send_command("show running-config")  # 默认命令
-            # print("使用netmiko备份成功")
-        config_data_xml = get_config_via_netconf(netconf_device)
-        # print("使用NETCONF备份成功")
+        try:
+            config_data_xml = get_config_via_netconf(netconf_device)
+            backup_record.config_data_xml = config_data_xml
+            device_backup.config_data_xml = config_data_xml
+        except Exception as e:
+            backup_record.error_msg = str(e)
+            device_backup.error_msg = str(e)
+            if request:
+                messages.error(request, f'设备{device.name}执行NETCONF备份失败:{e}')
         # 格式化时间
         now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         # 5. 保存配置到数据库
@@ -63,22 +69,23 @@ def backup_device_config(device: Device, username: str, password: str, device_ba
         backup_record.status = 'success'
         backup_record.config_data_txt = config
         backup_record.backup_time = now
-        backup_record.config_data_xml = config_data_xml
 
         device_backup.filename = f'{device.name}-{now}.cfg'
         device_backup.status = 'success'
         device_backup.config_data_txt = config
         device_backup.backup_time = now
-        device_backup.config_data_xml = config_data_xml
         device_backup.duration = datetime.timedelta(seconds=time.time() - start_time)
         if request:
-            messages.success(request, f"设备 {device.name} 配置备份成功！")
+            messages.success(request, f"设备 {device.name} 执行SSH配置备份成功！")
 
     except Exception as e:
+        now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         backup_record.status = 'failed'
         device_backup.status = 'failed'
         backup_record.error_msg = str(e)
         device_backup.error_msg = str(e)
+        backup_record.backup_time = now
+        device_backup.backup_time = now
         if request:
             messages.error(request,f'设备{device.name}备份失败:{device_backup.error_msg}')
 
