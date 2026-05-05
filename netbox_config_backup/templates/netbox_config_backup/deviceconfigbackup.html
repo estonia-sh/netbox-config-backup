@@ -104,11 +104,11 @@
           {% if object.status == 'success' %}
           <div class="btn-group">
             {# 原有下载按钮 #}
-            <a href="{% url 'plugins:netbox_config_backup:configbackuprecord_download' pk=object.pk %}" class="btn btn-sm btn-primary">
+            <a href="{% url 'plugins:netbox_config_backup:deviceconfigbackup_download' pk=object.pk %}" class="btn btn-sm btn-primary">
               <i class="mdi mdi-download"></i> 下载配置
             </a>
             {# 新增：配置恢复按钮（红色警示 + 确认弹窗） #}
-            <a href="{% url 'plugins:netbox_config_backup:configbackuprecord_recovery' pk=object.pk %}"
+            <a href="{% url 'plugins:netbox_config_backup:deviceconfigbackup_recovery' pk=object.pk %}"
                class="btn btn-sm btn-danger ml-2"
                onclick="return confirm('⚠️ 危险操作！确定要将此配置恢复到设备吗？\n该操作会覆盖设备当前配置！')">
               <i class="mdi mdi-restore"></i> 配置恢复
